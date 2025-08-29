@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
 
     // Use Ollama to analyze the image with resume photo checking prompt
     const response = await ollama.chat({
-      model: "llava:latest",
+      model: "llava:7b-v1.5-q4_0",
       messages: [
         {
           role: "user",
