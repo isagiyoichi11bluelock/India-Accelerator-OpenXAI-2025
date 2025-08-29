@@ -1,128 +1,145 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
+import { Upload, Briefcase, FileText } from "lucide-react";
 
 export default function Home() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
-  const [result, setResult] = useState<string | null>(null);
+  const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setSelectedFile(file);
-      setResult(null);
-      setError(null);
-
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setPreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
     }
   };
 
   const handleSubmit = async () => {
     if (!selectedFile) return;
     setLoading(true);
-    setError(null);
+
+    const formData = new FormData();
+    formData.append("image", selectedFile);
 
     try {
-      const formData = new FormData();
-      formData.append("image", selectedFile);
-
-      const response = await fetch("/api/analyze", {
+      const res = await fetch("/api/analyze", {
         method: "POST",
         body: formData,
       });
 
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to analyze image");
-      }
-
-      setResult(data.report);
+      const data = await res.json();
+      setResult(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      console.error("Upload failed:", err);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <main className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full">
-        <h1 className="text-3xl font-bold text-center text-blue-600 mb-6">
-          📷 AI Resume Photo Checker
-        </h1>
-        <p className="text-center text-gray-600 mb-6">
-          Upload your profile photo and get instant professional feedback.
-        </p>
-
-        <div className="space-y-6">
-          {/* File Upload */}
-          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleFileSelect}
-              className="hidden"
-              id="image-upload"
-            />
-            <label
-              htmlFor="image-upload"
-              className="cursor-pointer block"
-            >
-              <div className="text-gray-600">
-                <svg className="mx-auto h-12 w-12 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                </svg>
-                <p className="text-lg font-medium">Click to upload your photo</p>
-                <p className="text-sm text-gray-500">PNG, JPG, GIF up to 10MB</p>
-              </div>
-            </label>
-          </div>
-
-          {/* Image Preview */}
-          {preview && (
-            <div className="text-center">
-              <img
-                src={preview}
-                alt="Preview"
-                className="max-w-full h-64 object-cover rounded-lg mx-auto border"
-              />
-              <p className="text-sm text-gray-600 mt-2">{selectedFile?.name}</p>
-            </div>
-          )}
-
-          {/* Analyze Button */}
-          {selectedFile && (
-            <button
-              onClick={handleSubmit}
-              disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-bold py-3 px-4 rounded-lg transition-colors"
-            >
-              {loading ? "Analyzing..." : "Analyze Photo"}
-            </button>
-          )}
-
-          {/* Error Message */}
-          {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
-              {error}
-            </div>
-          )}
-
-          {/* Result */}
-          {result && (
-            <div className="bg-gray-50 border rounded-lg p-4 text-sm text-gray-800 whitespace-pre-line">
-              {result}
-            </div>
-          )}
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-700 p-6">
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="max-w-3xl w-full bg-white shadow-2xl rounded-3xl p-10"
+      >
+        {/* Header Section */}
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-extrabold text-gray-800 mb-3">
+            🚀 AI Resume Analyzer & Job Matcher
+          </h1>
+          <p className="text-gray-600 text-lg">
+            Upload your resume 📄 and let AI give you career insights 💡
+            and suggest real jobs from top companies 💼
+          </p>
         </div>
-      </div>
-    </main>
+
+        {/* Upload Box */}
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="border-2 border-dashed border-gray-300 rounded-xl p-8 flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 cursor-pointer"
+        >
+          <Upload size={40} className="text-blue-600 mb-3" />
+          <input
+            type="file"
+            accept=".jpg,.jpeg,.png"
+            onChange={handleFileChange}
+            className="hidden"
+            id="file-upload"
+          />
+          <label
+            htmlFor="file-upload"
+            className="text-blue-600 font-semibold cursor-pointer"
+          >
+            {selectedFile ? selectedFile.name : "Click to upload your resume (JPG/PNG)"}
+          </label>
+        </motion.div>
+
+        {/* Analyze Button */}
+        <button
+          onClick={handleSubmit}
+          disabled={loading}
+          className="w-full mt-6 bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-semibold py-3 rounded-xl hover:opacity-90 transition"
+        >
+          {loading ? "🔎 Analyzing Resume..." : "✨ Analyze Resume"}
+        </button>
+
+        {/* Results Section */}
+        {result && (
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7 }}
+            className="mt-8 space-y-6"
+          >
+            {/* AI Analysis */}
+            <div className="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-lg shadow-md">
+              <div className="flex items-center gap-2 mb-2">
+                <FileText className="text-blue-600" />
+                <h2 className="text-xl font-bold text-blue-700">
+                  AI Resume Analysis
+                </h2>
+              </div>
+              <pre className="text-gray-700 text-sm whitespace-pre-wrap leading-relaxed">
+                {result.analysis}
+              </pre>
+            </div>
+
+            {/* Job Matches */}
+            <div className="bg-green-50 border-l-4 border-green-600 p-5 rounded-lg shadow-md">
+              <div className="flex items-center gap-2 mb-2">
+                <Briefcase className="text-green-600" />
+                <h2 className="text-xl font-bold text-green-700">
+                  Job Matches
+                </h2>
+              </div>
+              <ul className="space-y-3">
+                {result.jobs?.map((job: any, i: number) => (
+                  <li
+                    key={i}
+                    className="p-3 bg-white rounded-lg border shadow-sm hover:shadow-md transition"
+                  >
+                    <a
+                      href={job.url}
+                      target="_blank"
+                      className="text-blue-600 font-medium"
+                    >
+                      {job.title}
+                    </a>{" "}
+                    <span className="text-gray-700">
+                      at {job.company} ({job.location})
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </motion.div>
+        )}
+      </motion.div>
+    </div>
   );
 }
