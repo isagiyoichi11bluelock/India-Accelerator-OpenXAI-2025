@@ -53,37 +53,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No text found in the resume." }, { status: 400 });
     }
 
-    // Optimized prompt: Shorter, more focused for faster Llama3 response
     try {
       const response = await ollama.chat({
         model: "llama3:latest",
         messages: [
           {
             role: "user",
-            content: `Analyze resume text:
-Extract:
+            content: `Analyze resume text and provide all fields:
 1. Skills (5-10, comma-separated)
 2. Experience (estimate years)
-3. Job titles (3-5, comma-separated)
-4. Suggestions (3-5 bullets; ;)
-5. Elevator pitch (3-5 sentences)
-6. Score (0-100)
-7. ATS keywords (5-10 to add, comma-separated)
-8. Cover letter snippet (3 sentences)
-9. Job trends (5 key trends, comma-separated)
+3. Job Titles (3-5, comma-separated)
+4. Suggestions to Improve (3-5 bullets; ;)
+5. Elevator Pitch (3-5 sentences)
+6. Score (single number 0-100)
+7. ATS Keywords (5-10 to add, comma-separated)
+8. Cover Letter (3 sentences)
+9. Job Trends (5 key trends, comma-separated)
 
-Format:
+Format exactly:
 Skills: [list]
 Experience: [years]
 Job Titles: [list]
-Suggestions: [bullet1]; [bullet2]; ...
+Suggestions to Improve: [bullet1]; [bullet2]; ...
 Elevator Pitch: [paragraph]
 Score: [number]
 ATS Keywords: [list]
 Cover Letter: [paragraph]
 Job Trends: [list]
 
-Text: ${text.substring(0, 4000)}`, // Limit text to reduce tokens
+Text: ${text.substring(0, 4000)}`,
           },
         ],
       });
@@ -102,21 +100,21 @@ Text: ${text.substring(0, 4000)}`, // Limit text to reduce tokens
 
       if (result) {
         const skillsMatch = result.match(/Skills:\s*(.+?)(?:\n|$)/i);
-        if (skillsMatch) skills = skillsMatch[1].trim();
+        if (skillsMatch) skills = skillsMatch[1].trim().replace(/\*\*/g, "");
 
         const expMatch = result.match(/Experience:\s*(.+?)(?:\n|$)/i);
         if (expMatch) experience = expMatch[1].trim();
 
         const titlesMatch = result.match(/Job Titles:\s*(.+?)(?:\n|$)/i);
-        if (titlesMatch) jobTitles = titlesMatch[1].trim();
+        if (titlesMatch) jobTitles = titlesMatch[1].trim().replace(/\*\*/g, "");
 
-        const suggMatch = result.match(/Suggestions:\s*(.+?)(?:\n|$)/i);
+        const suggMatch = result.match(/Suggestions to Improve:\s*(.+?)(?:\n|$)/i);
         if (suggMatch) suggestions = suggMatch[1].trim();
 
         const pitchMatch = result.match(/Elevator Pitch:\s*(.+?)(?:\n|$)/i);
         if (pitchMatch) elevatorPitch = pitchMatch[1].trim();
 
-        const scoreMatch = result.match(/Score:\s*(.+?)(?:\n|$)/i);
+        const scoreMatch = result.match(/Score:\s*(\d{1,3})(?:\n|$)/i);
         if (scoreMatch) score = scoreMatch[1].trim();
 
         const atsMatch = result.match(/ATS Keywords:\s*(.+?)(?:\n|$)/i);
@@ -129,7 +127,6 @@ Text: ${text.substring(0, 4000)}`, // Limit text to reduce tokens
         if (trendsMatch) jobTrends = trendsMatch[1].trim();
       }
 
-      // Parallel job searches for speed
       const rapidApiKey = process.env.RAPIDAPI_KEY;
       if (!rapidApiKey) {
         console.error("RapidAPI key not found in .env.local");
@@ -175,7 +172,6 @@ Text: ${text.substring(0, 4000)}`, // Limit text to reduce tokens
         })) || []);
       }
 
-      // Dedupe by title + company
       jobs = Array.from(new Set(jobs.map(j => JSON.stringify(j)))).map(j => JSON.parse(j)).slice(0, 5);
 
       return NextResponse.json({
@@ -192,7 +188,6 @@ Text: ${text.substring(0, 4000)}`, // Limit text to reduce tokens
         fullResponse: result,
         filename: file.name,
       });
-
     } catch (e) {
       console.error("Llama3 analysis error:", e);
       return NextResponse.json({ error: `Llama3 analysis failed: ${e instanceof Error ? e.message : "Unknown error"}` }, { status: 500 });

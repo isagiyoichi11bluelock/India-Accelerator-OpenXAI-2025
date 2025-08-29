@@ -46,3 +46,87 @@ body {
     text-shadow: .25em 0 0 white, .5em 0 0 white;
   }
 }
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --navy-700: #1E3A8A;
+  --navy-50: #E0E7FF;
+  --teal-200: #B2F5EA;
+  --teal-600: #34D1BF;
+  --gold-500: #FBBF24;
+  --gold-600: #F59E0B;
+}
+
+body {
+  font-family: 'Roboto', 'Arial', sans-serif;
+}
+
+.animate-loading-dots::after {
+  content: ' ...';
+  animation: dots 1.5s steps(5, end) infinite;
+}
+
+@keyframes dots {
+  0%, 20% {
+    color: rgba(0,0,0,0);
+    text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0);
+  }
+  40% {
+    color: var(--teal-600);
+    text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0);
+  }
+  60% {
+    text-shadow: .25em 0 0 var(--teal-600), .5em 0 0 rgba(0,0,0,0);
+  }
+  80%, 100% {
+    text-shadow: .25em 0 0 var(--teal-600), .5em 0 0 var(--teal-600);
+  }
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --navy-700: #1E3A8A;
+  --navy-50: #E0E7FF;
+  --teal-200: #B2F5EA;
+  --teal-400: #4FD1C5;
+  --teal-600: #34D1BF;
+  --teal-700: #2DD4BF;
+  --teal-800: #1D4044;
+  --gold-300: #FCD34D;
+  --gold-500: #FBBF24;
+  --gold-600: #F59E0B;
+  --gold-700: #D97706;
+  --gold-800: #B45309;
+}
+
+body {
+  font-family: 'Roboto', 'Arial', sans-serif;
+}
+
+.animate-loading-dots::after {
+  content: ' ...';
+  animation: dots 1.5s steps(5, end) infinite;
+}
+
+@keyframes dots {
+  0%, 20% {
+    color: rgba(0,0,0,0);
+    text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0);
+  }
+  40% {
+    color: var(--teal-600);
+    text-shadow: .25em 0 0 rgba(0,0,0,0), .5em 0 0 rgba(0,0,0,0);
+  }
+  60% {
+    text-shadow: .25em 0 0 var(--teal-600), .5em 0 0 rgba(0,0,0,0);
+  }
+  80%, 100% {
+    text-shadow: .25em 0 0 var(--teal-600), .5em 0 0 var(--teal-600);
+  }
+}
