@@ -2,6 +2,9 @@
   "dependencies": {
     "framer-motion": "^12.23.12",
     "lucide-react": "^0.542.0",
+    "mammoth": "^1.10.0",
+    "pdf-parse": "^1.1.1",
+    "pdfjs-dist": "^5.4.54",
     "tesseract.js": "^6.0.1"
   }
 }

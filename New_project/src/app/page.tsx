@@ -1,145 +1,114 @@
 "use client";
 
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { Upload, Briefcase, FileText } from "lucide-react";
+import React, { useState } from "react";
 
 export default function Home() {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!file) {
+      setError("Please upload a resume file (PDF, DOCX, JPG, PNG).");
+      return;
     }
-  };
 
-  const handleSubmit = async () => {
-    if (!selectedFile) return;
     setLoading(true);
-
-    const formData = new FormData();
-    formData.append("image", selectedFile);
+    setError(null);
+    setResult(null);
 
     try {
+      const formData = new FormData();
+      formData.append("image", file);
+
       const res = await fetch("/api/analyze", {
         method: "POST",
         body: formData,
       });
 
-      const data = await res.json();
-      setResult(data);
-    } catch (err) {
-      console.error("Upload failed:", err);
+      // First check if response is JSON
+      const contentType = res.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const data = await res.json();
+        
+        if (!res.ok) {
+          throw new Error(data.error || `Server error: ${res.status}`);
+        }
+        
+        setResult(data);
+      } else {
+        // If not JSON, read as text to see what we got
+        const text = await res.text();
+        throw new Error(`Server returned: ${text.substring(0, 100)}...`);
+      }
+    } catch (err: any) {
+      setError(err.message || "Something went wrong");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-700 p-6">
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="max-w-3xl w-full bg-white shadow-2xl rounded-3xl p-10"
-      >
-        {/* Header Section */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-extrabold text-gray-800 mb-3">
-            🚀 AI Resume Analyzer & Job Matcher
-          </h1>
-          <p className="text-gray-600 text-lg">
-            Upload your resume 📄 and let AI give you career insights 💡
-            and suggest real jobs from top companies 💼
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100 flex flex-col items-center justify-center p-6">
+      <div className="bg-white shadow-xl rounded-2xl p-8 w-full max-w-3xl">
+        <h1 className="text-3xl font-bold text-gray-800 text-center mb-6">
+          AI Resume Analyzer
+        </h1>
+        <p className="text-gray-600 text-center mb-6">
+          Upload your resume (PDF, DOCX for faster results, or JPG/PNG for OCR).
+        </p>
 
-        {/* Upload Box */}
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className="border-2 border-dashed border-gray-300 rounded-xl p-8 flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 cursor-pointer"
+        <form
+          onSubmit={handleSubmit}
+          className="flex flex-col items-center gap-4"
         >
-          <Upload size={40} className="text-blue-600 mb-3" />
           <input
             type="file"
-            accept=".jpg,.jpeg,.png"
-            onChange={handleFileChange}
-            className="hidden"
-            id="file-upload"
+            accept=".pdf,.docx,.jpg,.jpeg,.png"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            className="border rounded-lg p-2 w-full"
           />
-          <label
-            htmlFor="file-upload"
-            className="text-blue-600 font-semibold cursor-pointer"
+          <button
+            type="submit"
+            disabled={loading}
+            className="px-6 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-50 transition-colors"
           >
-            {selectedFile ? selectedFile.name : "Click to upload your resume (JPG/PNG)"}
-          </label>
-        </motion.div>
+            {loading ? "Analyzing..." : "Analyze Resume"}
+          </button>
+        </form>
 
-        {/* Analyze Button */}
-        <button
-          onClick={handleSubmit}
-          disabled={loading}
-          className="w-full mt-6 bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-semibold py-3 rounded-xl hover:opacity-90 transition"
-        >
-          {loading ? "🔎 Analyzing Resume..." : "✨ Analyze Resume"}
-        </button>
-
-        {/* Results Section */}
-        {result && (
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
-            className="mt-8 space-y-6"
-          >
-            {/* AI Analysis */}
-            <div className="bg-blue-50 border-l-4 border-blue-600 p-5 rounded-lg shadow-md">
-              <div className="flex items-center gap-2 mb-2">
-                <FileText className="text-blue-600" />
-                <h2 className="text-xl font-bold text-blue-700">
-                  AI Resume Analysis
-                </h2>
+        {error && (
+          <div className="mt-4 p-3 bg-red-100 text-red-700 rounded-lg">
+            <p className="font-semibold">Error:</p>
+            <p>{error}</p>
+            {error.includes("Ollama") && (
+              <div className="mt-2 text-sm">
+                <p>Make sure you:</p>
+                <ol className="list-decimal ml-5 mt-1">
+                  <li>Have installed Ollama from https://ollama.ai</li>
+                  <li>Run "ollama serve" in your terminal</li>
+                  <li>Run "ollama pull llama3" to download the model</li>
+                </ol>
               </div>
-              <pre className="text-gray-700 text-sm whitespace-pre-wrap leading-relaxed">
+            )}
+          </div>
+        )}
+
+        {result && (
+          <div className="mt-6">
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <h2 className="text-xl font-semibold text-gray-800 mb-2">
+                AI Analysis
+              </h2>
+              <pre className="text-gray-700 whitespace-pre-wrap">
                 {result.analysis}
               </pre>
             </div>
-
-            {/* Job Matches */}
-            <div className="bg-green-50 border-l-4 border-green-600 p-5 rounded-lg shadow-md">
-              <div className="flex items-center gap-2 mb-2">
-                <Briefcase className="text-green-600" />
-                <h2 className="text-xl font-bold text-green-700">
-                  Job Matches
-                </h2>
-              </div>
-              <ul className="space-y-3">
-                {result.jobs?.map((job: any, i: number) => (
-                  <li
-                    key={i}
-                    className="p-3 bg-white rounded-lg border shadow-sm hover:shadow-md transition"
-                  >
-                    <a
-                      href={job.url}
-                      target="_blank"
-                      className="text-blue-600 font-medium"
-                    >
-                      {job.title}
-                    </a>{" "}
-                    <span className="text-gray-700">
-                      at {job.company} ({job.location})
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </motion.div>
+          </div>
         )}
-      </motion.div>
+      </div>
     </div>
   );
 }
